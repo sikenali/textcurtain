@@ -23,9 +23,9 @@ interface AvoidRect {
   bottom: number
 }
 
-const COL_SPACING = 8.5
-const ROW_SPACING = 9.5
-const FONT_SIZE = 7
+const COL_SPACING = 12
+const ROW_SPACING = 13
+const FONT_SIZE = 10
 const MOUSE_RADIUS = 120
 const DAMPING = 0.94
 const HOME_STIFFNESS = 0.014
@@ -418,10 +418,10 @@ function setup() {
 
     if (reveal > 0.5 && x >= 0 && x <= width && y >= 0 && y <= height) {
       const speed = Math.sqrt(mouse.vx * mouse.vx + mouse.vy * mouse.vy)
-      if (speed > 2.5) {
+      if (speed > 0.8) {
         const topY = contourYAt(x)
         if (topY !== null && y > topY) {
-          playCurtainBrush(Math.min(1, speed / 26))
+          playCurtainBrush(Math.min(1, speed / 18))
         }
       }
     }

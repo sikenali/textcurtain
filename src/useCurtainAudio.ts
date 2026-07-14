@@ -1,7 +1,8 @@
 let ctx: AudioContext | null = null
 let master: GainNode | null = null
 let noiseBuffer: AudioBuffer | null = null
-let lastPlay = 0
+let lastNoisePlay = 0
+let lastBellPlay = 0
 let listenersAttached = false
 
 function ensureContext(): AudioContext | null {
@@ -65,77 +66,83 @@ export function playCurtainBrush(intensity: number) {
   }
 
   const now = performance.now()
-  if (now - lastPlay < 70) return
-  lastPlay = now
-
   const t = c.currentTime
-  const amp = 0.05 + Math.min(1, intensity) * 0.12
+  const amp = 0.03 + Math.min(1, intensity) * 0.08
 
-  const src = c.createBufferSource()
-  src.buffer = noiseBuffer
-  src.playbackRate.value = 0.85 + Math.random() * 0.3
+  // Noise (沙沙声)
+  if (now - lastNoisePlay > 40) {
+    lastNoisePlay = now
+    const src = c.createBufferSource()
+    src.buffer = noiseBuffer
+    src.playbackRate.value = 0.7 + Math.random() * 0.6
 
-  const bp = c.createBiquadFilter()
-  bp.type = 'bandpass'
-  bp.frequency.value = 1400 + intensity * 1800 + Math.random() * 500
-  bp.Q.value = 1.4
+    const lp = c.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 2000 + Math.random() * 2000
 
-  const g = c.createGain()
-  g.gain.setValueAtTime(0, t)
-  g.gain.linearRampToValueAtTime(amp, t + 0.012)
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2)
+    const g = c.createGain()
+    g.gain.setValueAtTime(0, t)
+    g.gain.linearRampToValueAtTime(amp, t + 0.008)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15 + Math.random() * 0.1)
 
-  src.connect(bp)
-  bp.connect(g)
-  g.connect(master)
-  src.start(t, Math.random() * 0.5, 0.25)
-  src.stop(t + 0.3)
+    src.connect(lp)
+    lp.connect(g)
+    g.connect(master)
+    src.start(t, Math.random() * 0.3, 0.15)
+    src.stop(t + 0.25)
+  }
 
-  if (intensity > 0.08) {
-    const notes = [1567.98, 1760, 2093, 2349.3, 2637, 3135.96]
-    const f0 = notes[Math.floor(Math.random() * notes.length)]
-    const partials = [
-      { ratio: 1, gain: 1, decay: 0.9 },
-      { ratio: 2.32, gain: 0.55, decay: 0.55 },
-      { ratio: 4.25, gain: 0.28, decay: 0.32 },
-      { ratio: 6.63, gain: 0.14, decay: 0.18 },
-    ]
-    const strikeAmp = 0.05 + intensity * 0.09
-    const detune = 1 + (Math.random() - 0.5) * 0.015
+  // Bell (铃音)
+  if (intensity > 0.03 && now - lastBellPlay > 150) {
+    const bellChance = Math.min(1, intensity * 3)
+    if (Math.random() < bellChance) {
+      lastBellPlay = now
+      const notes = [1046.5, 1318.5, 1568, 2093, 2637, 3136]
+      const f0 = notes[Math.floor(Math.random() * notes.length)]
+      const strikeAmp = 0.02 + intensity * 0.04
+      const detune = 1 + (Math.random() - 0.5) * 0.008
 
-    for (const p of partials) {
-      const osc = c.createOscillator()
-      osc.type = 'sine'
-      osc.frequency.value = f0 * p.ratio * detune
+      const partials = [
+        { ratio: 1, gain: 1, decay: 1.2 },
+        { ratio: 2.76, gain: 0.4, decay: 0.6 },
+        { ratio: 5.12, gain: 0.2, decay: 0.3 },
+      ]
 
-      const og = c.createGain()
-      const pAmp = strikeAmp * p.gain
-      og.gain.setValueAtTime(0, t)
-      og.gain.linearRampToValueAtTime(pAmp, t + 0.003)
-      og.gain.exponentialRampToValueAtTime(0.0001, t + p.decay)
+      for (const p of partials) {
+        const osc = c.createOscillator()
+        osc.type = 'sine'
+        osc.frequency.value = f0 * p.ratio * detune
 
-      osc.connect(og)
-      og.connect(master)
-      osc.start(t)
-      osc.stop(t + p.decay + 0.05)
-    }
+        const og = c.createGain()
+        const pAmp = strikeAmp * p.gain
+        og.gain.setValueAtTime(0, t)
+        og.gain.linearRampToValueAtTime(pAmp, t + 0.002)
+        og.gain.exponentialRampToValueAtTime(0.0001, t + p.decay)
 
-    if (Math.random() < 0.35) {
-      const dt = 0.06 + Math.random() * 0.08
-      const f1 = notes[Math.floor(Math.random() * notes.length)]
-      const osc2 = c.createOscillator()
-      osc2.type = 'sine'
-      osc2.frequency.value = f1 * detune
+        osc.connect(og)
+        og.connect(master)
+        osc.start(t)
+        osc.stop(t + p.decay + 0.05)
+      }
 
-      const og2 = c.createGain()
-      og2.gain.setValueAtTime(0, t + dt)
-      og2.gain.linearRampToValueAtTime(strikeAmp * 0.5, t + dt + 0.003)
-      og2.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.6)
+      // Delayed second bell (叠音)
+      if (Math.random() < 0.3) {
+        const dt = 0.04 + Math.random() * 0.06
+        const f1 = notes[Math.floor(Math.random() * notes.length)]
+        const osc2 = c.createOscillator()
+        osc2.type = 'sine'
+        osc2.frequency.value = f1 * detune
 
-      osc2.connect(og2)
-      og2.connect(master)
-      osc2.start(t + dt)
-      osc2.stop(t + dt + 0.65)
+        const og2 = c.createGain()
+        og2.gain.setValueAtTime(0, t + dt)
+        og2.gain.linearRampToValueAtTime(strikeAmp * 0.4, t + dt + 0.002)
+        og2.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.5)
+
+        osc2.connect(og2)
+        og2.connect(master)
+        osc2.start(t + dt)
+        osc2.stop(t + dt + 0.55)
+      }
     }
   }
 }
