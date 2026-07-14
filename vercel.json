@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd textcurtain-vue && npm install && npm run build",
+  "outputDirectory": "textcurtain-vue/dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
