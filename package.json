@@ -1,0 +1,34 @@
+{
+  "name": "text-curtain-vue",
+  "version": "0.1.0",
+  "description": "Interactive canvas text curtain with Verlet physics — ported from Budarina's hanging ink curtain",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./useCurtainAudio": {
+      "import": "./src/useCurtainAudio.ts",
+      "types": "./src/useCurtainAudio.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "vue",
+    "canvas",
+    "text-curtain",
+    "verlet",
+    "physics",
+    "interactive",
+    "chinese"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "vue": "^3.4"
+  }
+}
