@@ -1,8 +1,18 @@
-# text-curtain-vue
+# textcurtain-vue
 
-Interactive canvas text curtain with Verlet physics — a Vue 3 port of the hanging ink curtain from [Budarina — Roofs of the World](https://github.com/jingle/Chinese-PhoenixCrown).
+An interactive canvas-based text curtain built with Vue 3, inspired by the hanging ink curtain effect from [Budrina — Roofs of the World]https://github.com/aigc17/Chinese-PhoenixCrown).
 
-Chinese characters hang in vertical strands pinned to an image's bottom contour. Mouse movement parts the strands like fabric, with sway physics and optional audio feedback.
+Chinese characters hang in vertical strands pinned to the bottom contour of an image. Moving the mouse parts the strands like fabric, with Verlet integration physics for natural sway. Optional audio feedback plays when the curtain is brushed quickly.
+
+## Features
+
+- **Verlet physics simulation** — strands sway and spring back naturally
+- **Contour-based anchoring** — characters hang from any image's bottom edge
+- **Multi-color ink palette** — cycle through custom colors per strand
+- **Luminous mode** — dark background with soft glow effect
+- **Mouse interaction** — move fast to part the curtain; fast movement triggers brush sounds
+- **Avoid regions** — fade characters behind specific DOM elements
+- **Vue 3 Composition API** — clean `<script setup>` integration
 
 ## Install
 
@@ -11,6 +21,8 @@ npm install text-curtain-vue
 ```
 
 ## Usage
+
+### Basic
 
 ```vue
 <script setup lang="ts">
@@ -22,14 +34,15 @@ import { TextCurtain } from 'text-curtain-vue'
     charPool="凤冠霞帔金翠蓝宝珠玉花翎"
     :inkAlpha="0.62"
     :colors="['#7d9bf0', '#e8c46a', '#f2ecdc']"
-    :luminous="true"
-    contourSelector="#my-image"
+    :luminous="false"
     style="width: 100%; height: 500px"
   />
 </template>
 ```
 
-With a contour image (strands hang from the image's bottom edge):
+### With contour image
+
+Characters hang from the image's bottom edge:
 
 ```vue
 <script setup lang="ts">
@@ -59,27 +72,39 @@ import { TextCurtain } from 'text-curtain-vue'
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `charPool` | `string` | — (required) | Characters that form the hanging curtain |
-| `className` | `string` | — | CSS class for the canvas |
-| `color` | `string` | `'#4a3a28'` | Uniform ink color (used when `colors` is empty) |
-| `colors` | `string[]` | — | Multi-color ink palette; strands cycle through these |
-| `inkAlpha` | `number` | `0.62` | Base ink opacity (0–1). Light scenes: ~0.62, dark: ~1 |
-| `luminous` | `boolean` | `false` | Dark-scene mode: heavier stroke + soft glow |
-| `contourSelector` | `string` | — | CSS selector for an `<img>` whose bottom contour the curtain hangs from |
-| `avoidSelector` | `string` | — | CSS selector for elements behind which the curtain fades |
+| `charPool` | `string` | — (required) | Pool of characters to display in the curtain |
+| `className` | `string` | — | CSS class applied to the canvas element |
+| `color` | `string` | `'#4a3a28'` | Single ink color (used when `colors` is empty) |
+| `colors` | `string[]` | — | Array of ink colors; strands cycle through the palette |
+| `inkAlpha` | `number` | `0.62` | Base opacity of characters (0–1). Use ~0.62 for light backgrounds, ~1 for dark |
+| `luminous` | `boolean` | `false` | Enable dark-scene mode with heavier stroke weight and soft glow |
+| `contourSelector` | `string` | — | CSS selector for an `<img>` element; curtain hangs from its bottom pixel edge |
+| `avoidSelector` | `string` | — | CSS selector for elements behind which the curtain gradually fades out |
 
 ## Audio
 
-Imported separately:
+Sound effects are imported separately:
 
 ```ts
 import { playCurtainBrush, unlockCurtainAudio } from 'text-curtain-vue/useCurtainAudio'
 
-// unlock on first user gesture
+// Call on first user gesture (click / tap) to unlock audio context
 unlockCurtainAudio()
-// play a brush sound (intensity 0–1)
+
+// Play a brush sound with intensity 0–1
 playCurtainBrush(0.5)
 ```
+
+## How It Works
+
+1. **Character atlas** — all unique characters × colors are pre-rendered onto an offscreen canvas for GPU-accelerated batch drawing.
+2. **Strand construction** — columns of nodes are generated from the image contour downward, each node storing position, velocity, and home coordinates.
+3. **Physics loop** — Verlet integration simulates spring forces toward home positions, damping, breeze oscillation, and mouse repulsion. Constraint solving keeps adjacent nodes at fixed distances.
+4. **Rendering** — the atlas is drawn per-node with per-character rotation derived from the angle to its predecessor in the strand.
+
+## Browser Support
+
+Modern browsers with Canvas 2D and `requestAnimationFrame` support. Tested on Chrome, Firefox, Safari, and Edge.
 
 ## License
 
