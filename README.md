@@ -1,18 +1,22 @@
 # textcurtain-vue
 
-An interactive canvas-based text curtain built with Vue 3, inspired by the hanging ink curtain effect from [Budrina — Roofs of the World]https://github.com/aigc17/Chinese-PhoenixCrown).
+An interactive canvas-based text curtain built with Vue 3, inspired by the hanging ink curtain effect from [Budrina — Roofs of the World](https://github.com/aigc17/Chinese-PhoenixCrown).
 
 Chinese characters hang in vertical strands pinned to the bottom contour of an image. Moving the mouse parts the strands like fabric, with Verlet integration physics for natural sway. Optional audio feedback plays when the curtain is brushed quickly.
 
 ## Features
 
-- **Verlet physics simulation** — strands sway and spring back naturally
-- **Contour-based anchoring** — characters hang from any image's bottom edge
+- **Verlet physics simulation** — strands sway and spring back naturally with damping and breeze oscillation
+- **Contour-based anchoring** — characters hang from any image's bottom visible pixel edge
 - **Multi-color ink palette** — cycle through custom colors per strand
-- **Luminous mode** — dark background with soft glow effect
-- **Mouse interaction** — move fast to part the curtain; fast movement triggers brush sounds
-- **Avoid regions** — fade characters behind specific DOM elements
-- **Vue 3 Composition API** — clean `<script setup>` integration
+- **Luminous mode** — dark background with lighter font weight and softer appearance
+- **Mouse interaction** — move fast to part the curtain; speed triggers brush sounds
+- **Avoid regions** — fade characters behind specific DOM elements with feathered edges
+- **Smooth reveal** — curtain fades in with gradual alpha animation on mount
+- **DPR-aware rendering** — scales to device pixel ratio for crisp text on Retina displays
+- **Atlas batch rendering** — pre-renders all character+color combinations to an offscreen canvas for GPU-accelerated drawing
+- **Per-character rotation** — each glyph rotates based on its angle to the predecessor in the strand
+- **Vue 3 Composition API** — clean `<script setup>` integration with reactive props
 
 ## Install
 
@@ -42,7 +46,7 @@ import { TextCurtain } from 'text-curtain-vue'
 
 ### With contour image
 
-Characters hang from the image's bottom edge:
+Characters hang from the image's bottom visible edge:
 
 ```vue
 <script setup lang="ts">
@@ -60,12 +64,39 @@ import { TextCurtain } from 'text-curtain-vue'
     <div style="position: absolute; inset: 0">
       <TextCurtain
         charPool="凤冠霞帔金翠蓝宝"
-        contourSelector="#roof-image"
+        contour-selector="#roof-image"
         :luminous="true"
       />
     </div>
   </div>
 </template>
+```
+
+### With avoid region
+
+Characters fade out near specified elements:
+
+```vue
+<TextCurtain
+  charPool="凤冠霞帔金翠蓝宝"
+  contour-selector="#crown-image"
+  avoid-selector=".overlay-element"
+  :colors="['#d4af37', '#c0c0c0', '#ffffff']"
+/>
+```
+
+### With audio feedback
+
+Sound effects are imported separately:
+
+```ts
+import { playCurtainBrush, unlockCurtainAudio } from 'text-curtain-vue/useCurtainAudio'
+
+// Call on first user gesture (click / tap) to unlock audio context
+unlockCurtainAudio()
+
+// Play a brush sound with intensity 0–1
+playCurtainBrush(0.5)
 ```
 
 ## Props
@@ -80,20 +111,6 @@ import { TextCurtain } from 'text-curtain-vue'
 | `luminous` | `boolean` | `false` | Enable dark-scene mode with heavier stroke weight and soft glow |
 | `contourSelector` | `string` | — | CSS selector for an `<img>` element; curtain hangs from its bottom pixel edge |
 | `avoidSelector` | `string` | — | CSS selector for elements behind which the curtain gradually fades out |
-
-## Audio
-
-Sound effects are imported separately:
-
-```ts
-import { playCurtainBrush, unlockCurtainAudio } from 'text-curtain-vue/useCurtainAudio'
-
-// Call on first user gesture (click / tap) to unlock audio context
-unlockCurtainAudio()
-
-// Play a brush sound with intensity 0–1
-playCurtainBrush(0.5)
-```
 
 ## How It Works
 
