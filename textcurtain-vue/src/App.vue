@@ -128,6 +128,7 @@ const scenes: CrownScene[] = [
 ]
 
 const index = ref(0)
+const sceneIndex = ref(0)
 const scene = computed(() => scenes[index.value])
 const prevIdx = computed(() => (index.value - 1 + scenes.length) % scenes.length)
 const nextIdx = computed(() => (index.value + 1) % scenes.length)
@@ -137,6 +138,7 @@ function goTo(i: number) {
   if (transitioning) return
   transitioning = true
   index.value = i
+  sceneIndex.value = i
   setTimeout(() => { transitioning = false }, 400)
 }
 </script>
@@ -166,7 +168,7 @@ function goTo(i: number) {
         <p class="crown-subtitle">{{ scene.subtitle }}</p>
       </div>
 
-      <div class="crown-area" :key="`wrap-${scene.id}`">
+      <div class="crown-area" :class="{ 'scene-hidden': index !== sceneIndex }">
         <div class="crown-shadow" aria-hidden="true" />
         <img
           :id="`roof-${scene.id}`"
@@ -177,15 +179,15 @@ function goTo(i: number) {
         />
       </div>
 
-      <div class="curtain-area" :key="`ctn-${scene.id}`">
-        <TextCurtain
-          :charPool="scene.charPool"
-          :colors="scene.colors"
-          :inkAlpha="0.50"
-          :luminous="false"
-          :contourSelector="`#roof-${scene.id}`"
-        />
-      </div>
+      <TextCurtain
+        :charPool="scene.charPool"
+        :colors="scene.colors"
+        :inkAlpha="0.50"
+        :luminous="false"
+        :contourSelector="`#roof-${scene.id}`"
+        class="curtain-area"
+        :class="{ 'scene-hidden': index !== sceneIndex }"
+      />
     </div>
 
     <button class="side-nav side-left" @click="goTo(prevIdx)" aria-label="上一件">
@@ -352,9 +354,10 @@ function goTo(i: number) {
   position: absolute;
   left: 50%;
   top: 5%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(1);
   width: clamp(200px, 22vw, 380px);
   z-index: 12;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
 }
 .crown-shadow {
   position: absolute;
@@ -380,9 +383,17 @@ function goTo(i: number) {
   left: 50%;
   top: 5%;
   bottom: 14%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(1);
   width: min(calc(clamp(200px, 22vw, 380px) * 0.78 + 36vw), 88vw);
   z-index: 8;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+}
+
+/* Scene hide/show transition */
+.scene-hidden {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.92);
+  pointer-events: none;
 }
 
 .side-nav {
