@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm install --prefix textcurtain-vue && npm run build --prefix textcurtain-vue",
+  "buildCommand": "cd textcurtain-vue && npm install && chmod +x node_modules/.bin/vite && npm run build",
   "outputDirectory": "textcurtain-vue/dist",
   "framework": "vite",
   "rewrites": [
